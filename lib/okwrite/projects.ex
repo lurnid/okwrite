@@ -7,6 +7,7 @@ defmodule OKWrite.Projects do
   alias OKWrite.Repo
 
   alias OKWrite.Projects.Project
+  alias OKWrite.ProjectsUsers.ProjectUser
 
   @doc """
   Returns the list of projects.
@@ -100,5 +101,11 @@ defmodule OKWrite.Projects do
   """
   def change_project(%Project{} = project, attrs \\ %{}) do
     Project.changeset(project, attrs)
+  end
+
+  def add_project_user(project_id, user_id, role) do
+    %ProjectUser{}
+    |> ProjectUser.changeset(%{project_id: project_id, user_id: user_id, role: role})
+    |> Repo.insert()
   end
 end

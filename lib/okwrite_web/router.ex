@@ -1,6 +1,8 @@
 defmodule OKWriteWeb.Router do
   use OKWriteWeb, :router
 
+  import OKWriteWeb.UserAuth
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -8,6 +10,7 @@ defmodule OKWriteWeb.Router do
     plug :put_root_layout, {OKWriteWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug :fetch_current_user
   end
 
   pipeline :api do
@@ -18,13 +21,6 @@ defmodule OKWriteWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
-
-    live "/projects", ProjectLive.Index, :index
-    live "/projects/new", ProjectLive.Index, :new
-    live "/projects/:id/edit", ProjectLive.Index, :edit
-
-    live "/projects/:id", ProjectLive.Show, :show
-    live "/projects/:id/show/edit", ProjectLive.Show, :edit
   end
 
   # Other scopes may use custom stacks.
@@ -46,6 +42,52 @@ defmodule OKWriteWeb.Router do
 
       live_dashboard "/dashboard", metrics: OKWriteWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
+    end
+  end
+
+  ## Authentication routes
+
+  scope "/", OKWriteWeb do
+    pipe_through [:browser, :redirect_if_user_is_authenticated]
+
+    live_session :redirect_if_user_is_authenticated,
+      on_mount: [{OKWriteWeb.UserAuth, :redirect_if_user_is_authenticated}] do
+      live "/users/register", UserRegistrationLive, :new
+      live "/users/log_in", UserLoginLive, :new
+      live "/users/reset_password", UserForgotPasswordLive, :new
+      live "/users/reset_password/:token", UserResetPasswordLive, :edit
+    end
+
+    post "/users/log_in", UserSessionController, :create
+  end
+
+  scope "/", OKWriteWeb do
+    pipe_through [:browser, :require_authenticated_user]
+
+    live_session :require_authenticated_user,
+      on_mount: [{OKWriteWeb.UserAuth, :ensure_authenticated}] do
+      live "/users/settings", UserSettingsLive, :edit
+      live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
+
+      live "/projects", ProjectLive.Index, :index
+      live "/projects/new", ProjectLive.Index, :new
+      live "/projects/:id/edit", ProjectLive.Index, :edit
+
+      live "/projects/:id", ProjectLive.Show, :show
+      live "/projects/:id/show/edit", ProjectLive.Show, :edit
+
+    end
+  end
+
+  scope "/", OKWriteWeb do
+    pipe_through [:browser]
+
+    delete "/users/log_out", UserSessionController, :delete
+
+    live_session :current_user,
+      on_mount: [{OKWriteWeb.UserAuth, :mount_current_user}] do
+      live "/users/confirm/:token", UserConfirmationLive, :edit
+      live "/users/confirm", UserConfirmationInstructionsLive, :new
     end
   end
 end

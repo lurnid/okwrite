@@ -32,6 +32,7 @@ defmodule OKWrite.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:bcrypt_elixir, "~> 3.0"},
       {:phoenix, "~> 1.7.1"},
       {:phoenix_ecto, "~> 4.4"},
       {:ecto_sql, "~> 3.6"},
@@ -51,7 +52,7 @@ defmodule OKWrite.MixProject do
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
 
-      {:dart_sass, "~> 0.5", runtime: Mix.env() == :dev},
+      {:dart_sass, "~> 0.5", runtime: Mix.env() == :dev}
     ]
   end
 

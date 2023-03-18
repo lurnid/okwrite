@@ -70,6 +70,7 @@ defmodule OKWriteWeb.ProjectLive.FormComponent do
   defp save_project(socket, :new, project_params) do
     case Projects.create_project(project_params) do
       {:ok, project} ->
+        Projects.add_project_user(project.id, socket.assigns.current_user.id, "Maintainer")
         notify_parent({:saved, project})
 
         {:noreply,
